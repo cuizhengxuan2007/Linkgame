@@ -15,34 +15,104 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+/**
+ * 游戏主界面窗口
+ * 
+ * 连连看游戏的核心界面，提供完整的游戏功能：
+ * - 显示游戏面板和方块
+ * - 处理方块选择和消除逻辑
+ * - 实时显示游戏状态（分数、时间、连消等）
+ * - 支持游戏保存和加载
+ * - 游戏结束判定和分数记录
+ * 
+ * 游戏玩法：
+ * 1. 点击第一个方块选中
+ * 2. 点击第二个相同类型的方块
+ * 3. 如果两个方块可以通过不超过两个拐角的路径连接，则消除
+ * 4. 消除所有方块即可获胜
+ * 
+ * @author LinkGame Team
+ * @version 1.0
+ * @see Difficulty
+ * @see GameState
+ * @see GameService
+ * @see LeaderboardService
+ */
 public class GameFrame extends JFrame {
+    /** 当前用户名 */
     private String username;
+    
+    /** 是否为游客模式（游客无法保存游戏） */
     private boolean isGuest;
+    
+    /** 当前游戏难度 */
     private Difficulty difficulty;
+    
+    /** 游戏面板的二维数组表示 */
     private int[][] board;
+    
+    /** 当前选中的方块行号，-1表示未选中 */
     private int selectedRow = -1;
+    
+    /** 当前选中的方块列号，-1表示未选中 */
     private int selectedCol = -1;
+    
+    /** 连接路径的点列表，用于绘制连接线 */
     private List<Point> connectionPath;
+    
+    /** 当前游戏分数 */
     private int score = 0;
+    
+    /** 当前连消次数 */
     private int combo = 0;
+    
+    /** 游戏已用时间（秒） */
     private long time = 0;
+    
+    /** 游戏剩余时间（秒） */
     private long remainingTime = 0;
+    
+    /** 游戏计时器 */
     private Timer timer;
+    
+    /** 用户名标签 */
     private JLabel userLabel;
+    
+    /** 分数标签 */
     private JLabel scoreLabel;
+    
+    /** 已用时间标签 */
     private JLabel timeLabel;
+    
+    /** 剩余时间标签 */
     private JLabel remainingLabel;
+    
+    /** 连消标签 */
     private JLabel comboLabel;
+    
+    /** 游戏状态标签 */
     private JLabel statusLabel;
+    
+    /** 游戏面板 */
     private JPanel gamePanel;
     
+    /** 方块大小（像素） */
     private static final int TILE_SIZE = 45;
+    
+    /** 方块颜色数组 */
     private static final Color[] COLORS = {
         Color.WHITE, Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW, 
         Color.ORANGE, Color.PINK, new Color(128, 0, 128), Color.CYAN, Color.MAGENTA,
         Color.LIGHT_GRAY, Color.DARK_GRAY, new Color(165, 42, 42)
     };
     
+    /**
+     * 构造函数，创建新游戏
+     * 
+     * @param username 当前用户名
+     * @param isGuest 是否为游客模式
+     * @param difficulty 游戏难度
+     */
     public GameFrame(String username, boolean isGuest, Difficulty difficulty) {
         this.username = username;
         this.isGuest = isGuest;
@@ -53,6 +123,13 @@ public class GameFrame extends JFrame {
         startTimer();
     }
     
+    /**
+     * 构造函数，加载保存的游戏或创建新游戏
+     * 
+     * @param username 当前用户名
+     * @param isGuest 是否为游客模式
+     * @param loadSave 是否加载保存的游戏
+     */
     public GameFrame(String username, boolean isGuest, boolean loadSave) {
         this.username = username;
         this.isGuest = isGuest;
@@ -68,6 +145,9 @@ public class GameFrame extends JFrame {
         startTimer();
     }
     
+    /**
+     * 初始化新游戏
+     */
     private void initNewGame() {
         board = GameService.createBoard(difficulty);
         score = 0;
@@ -79,6 +159,9 @@ public class GameFrame extends JFrame {
         connectionPath = null;
     }
     
+    /**
+     * 初始化用户界面
+     */
     private void initUI() {
         setTitle("连连看游戏");
         
@@ -182,6 +265,9 @@ public class GameFrame extends JFrame {
         setVisible(true);
     }
     
+    /**
+     * 启动游戏计时器
+     */
     private void startTimer() {
         timer = new Timer();
         timer.schedule(new TimerTask() {
@@ -202,12 +288,21 @@ public class GameFrame extends JFrame {
         }, 1000, 1000);
     }
     
+    /**
+     * 格式化时间字符串
+     * 
+     * @param seconds 秒数
+     * @return 格式化后的时间字符串（MM:SS）
+     */
     private String formatTime(long seconds) {
         long mins = seconds / 60;
         long secs = seconds % 60;
         return String.format("%02d:%02d", mins, secs);
     }
     
+    /**
+     * 更新游戏进度
+     */
     private void updateProgress() {
         int remainingPairs = GameService.getRemainingPairs(board);
         int totalPairs;
@@ -220,6 +315,12 @@ public class GameFrame extends JFrame {
         statusLabel.setText("进度: " + progress + "% | 剩余配对: " + remainingPairs);
     }
     
+    /**
+     * 处理方块点击事件
+     * 
+     * @param row 方块行号
+     * @param col 方块列号
+     */
     private void handleClick(int row, int col) {
         if (board[row][col] == 0) {
             return;
@@ -305,6 +406,11 @@ public class GameFrame extends JFrame {
         }
     }
     
+    /**
+     * 绘制游戏面板
+     * 
+     * @param g Graphics对象
+     */
     private void drawBoard(Graphics g) {
         int rows = board.length;
         int cols = board[0].length;
@@ -344,6 +450,11 @@ public class GameFrame extends JFrame {
         drawConnectionLine(g);
     }
     
+    /**
+     * 绘制连接线
+     * 
+     * @param g Graphics对象
+     */
     private void drawConnectionLine(Graphics g) {
         if (connectionPath != null && connectionPath.size() >= 2) {
             Graphics2D g2d = (Graphics2D) g;
@@ -366,6 +477,11 @@ public class GameFrame extends JFrame {
         }
     }
     
+    /**
+     * 游戏结束处理
+     * 
+     * @param won 是否获胜
+     */
     private void gameOver(boolean won) {
         String message;
         if (won) {
@@ -401,6 +517,9 @@ public class GameFrame extends JFrame {
         }
     }
     
+    /**
+     * 保存游戏状态
+     */
     private void saveGame() {
         GameState state = new GameState();
         state.setUsername(username);
@@ -416,6 +535,9 @@ public class GameFrame extends JFrame {
         JOptionPane.showMessageDialog(this, "游戏已保存", "保存成功", JOptionPane.INFORMATION_MESSAGE);
     }
     
+    /**
+     * 加载游戏状态
+     */
     private void loadGame() {
         GameState state = GameService.loadGame(username);
         if (state != null) {
